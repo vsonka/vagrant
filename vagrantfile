@@ -1,0 +1,86 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  config.vm.define "coe-buildservers" do |vm3|    
+        vm3.vm.box = "centos/7"
+        vm3.vm.hostname = "coe-buildservers"
+        vm3.vm.network "private_network", ip: "10.0.0.75"
+        vm3.vm.network "forwarded_port", guest: 80, host: 9082, host_ip: "127.0.0.1"
+    
+    vm3.vm.provider "virtualbox" do |vb|
+    vb.name = "coe-buildservers"
+  end
+  
+   vm3.vm.provision "shell", inline: <<-SHELL
+	sleep 59s
+	sudo su
+	
+	#package install
+	
+	sudo yum install wget -y
+	useradd vagrantnew
+	#take update first
+		sudo yum install epel-release
+		sudo yum update -y
+	#install java and set java_home
+	sudo yum install java-1.8.0-openjdk.x86_64 -y
+	sudo cp /etc/profile /etc/profile_backup
+	sudo touch /etc/profile.d/java.sh
+	echo 'export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.161-0.b14.el7_4.x86_64/jre' | sudo tee -a /etc/profile.d/java.sh
+	echo 'export PATH=${JAVA_HOME}/bin:${PATH}' | sudo tee -a /etc/profile.d/java.sh
+	#echo 'export JAVA_HOME=/usr/lib/jvm/jre-1.8.0-openjdk' | sudo tee -a /etc/profile
+	echo 'export JRE_HOME=/usr/lib/jvm/jre' | sudo tee -a /etc/profile
+	source /etc/profile.d/java.sh
+	source /etc/profile
+	
+	#install maven
+	cd 
+	wget http://www-us.apache.org/dist/maven/maven-3/3.0.5/binaries/apache-maven-3.0.5-bin.tar.gz
+	tar -zxvf apache-maven-3.0.5-bin.tar.gz
+	
+	sudo mv ~/apache-maven-3.0.5 /opt
+	sudo chown -R root:root /opt/apache-maven-3.0.5
+	sudo ln -s /opt/apache-maven-3.0.5 /opt/apache-maven
+	sudo touch /etc/profile.d/maven.sh
+	echo 'export M2_HOME=/opt/apache-maven' | sudo tee -a /etc/profile.d/maven.sh
+	echo 'export PATH=${M2_HOME}/bin:${PATH}' | sudo tee -a /etc/profile.d/maven.sh
+	#echo 'export M2_HOME=/opt/apache-maven/bin' | sudo tee -a /etc/profile
+	Source /etc/profile.d/maven.sh
+	
+	#install Jenkins 
+	cd ~ 
+	sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+	sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+	yum install jenkins -y 
+	
+	#start jenkins and enable on reboot
+		sleep 20s
+		sudo systemctl start jenkins.service
+		sudo systemctl enable jenkins.service
+
+	#check all service and application installed so far		
+	yum install git -y
+	yum install ansible -y
+	echo $JAVA_HOME
+	echo $JRE_HOME
+	ansible --version 
+	git --version
+	sudo systemctl status jenkins.service
+  SHELL
+end
+
+
+
+end 
+  
+
+
+
+  
+  
+
