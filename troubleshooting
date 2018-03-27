@@ -1,0 +1,6 @@
+issue :- Vagrant was unable to mount VirtualBox shared folders. This is usually
+because the filesystem "vboxsf" is not available.
+
+solution :- install below plugin first 
+
+vagrant plugin install vagrant-vbguest
