@@ -11,6 +11,7 @@ Vagrant.configure("2") do |config|
         vm3.vm.hostname = "coe-buildservers"
         vm3.vm.network "private_network", ip: "10.0.0.75"
         vm3.vm.network "forwarded_port", guest: 80, host: 9082, host_ip: "127.0.0.1"
+		vm3.vm.synced_folder "../sourcecode", "/opt/sourcecode"
     
     vm3.vm.provider "virtualbox" do |vb|
     vb.name = "coe-buildservers"
@@ -21,13 +22,17 @@ Vagrant.configure("2") do |config|
 	sudo su
 	
 	#package install
-	
+	sudo cp /etc/yum.conf /etc/yum_backup.conf
+	echo 'proxy=http://10.131.253.111:3128' | sudo tee -a /etc/yum.conf
 	sudo yum install wget -y
-	useradd vagrantnew
-	#take update first
+	sudo yum install vim -y
+	
+	# Update first
 		sudo yum install epel-release
 		sudo yum update -y
+		
 	#install java and set java_home
+	
 	sudo yum install java-1.8.0-openjdk.x86_64 -y
 	sudo cp /etc/profile /etc/profile_backup
 	sudo touch /etc/profile.d/java.sh
@@ -58,25 +63,61 @@ Vagrant.configure("2") do |config|
 	sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
 	yum install jenkins -y 
 	
+	#chages jenkins port 8080 to 9090
+	
+	cp /etc/sysconfig/jenkins /etc/sysconfig/jenkins_bk
+	sed -i -e 's/JENKINS_PORT="8080"/JENKINS_PORT="9090"/g' /etc/sysconfig/jenkins
+	
 	#start jenkins and enable on reboot
 		sleep 20s
 		sudo systemctl start jenkins.service
 		sudo systemctl enable jenkins.service
+		
+	#install ansible 
+	
+	yum install ansible -y
+	
+	#install git 
+	yum install git -y
+
+	
+	#docker installation 
+	sudo cp /opt/sourcecode/vagrant/vagrant/docker.repo /etc/yum.repos.d
+	sudo yum search docker-engine
+	sudo yum install -y docker-engine
+	sudo systemctl enable docker
+	sudo systemctl start docker
+	sudo systemctl status docker
+	
+	#pull hello container of docker 
+	docker pull hello-world 
+
 
 	#check all service and application installed so far		
-	yum install git -y
-	yum install ansible -y
+
+	
 	echo $JAVA_HOME
 	echo $JRE_HOME
 	ansible --version 
 	git --version
+	java -version
+	mvn --version
 	sudo systemctl status jenkins.service
+	docker ps -a
   SHELL
 end
 
 
 
 end 
+  
+
+
+
+  
+  
+
+
   
 
 
