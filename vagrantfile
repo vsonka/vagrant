@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
 	
 	#package install
 	sudo cp /etc/yum.conf /etc/yum_backup.conf
-	echo 'proxy=http://10.131.253.111:3128' | sudo tee -a /etc/yum.conf
+	echo 'proxy=http://ip' | sudo tee -a /etc/yum.conf
 	sudo yum install wget -y
 	sudo yum install vim -y
 	
@@ -88,6 +88,15 @@ Vagrant.configure("2") do |config|
 	sudo systemctl enable docker
 	sudo systemctl start docker
 	sudo systemctl status docker
+	
+	#Docker- compose installation 
+	
+	yum search docker-engine
+	yum install -y docker-engine
+	systemctl enable docker
+	systemctl start docker
+	systemctl status docker
+
 	
 	#pull hello container of docker 
 	docker pull hello-world 
